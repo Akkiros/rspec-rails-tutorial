@@ -54,7 +54,7 @@ after run ``bundle install`` start rspec setting.
 $ rails g rspec:install
 ```
 
-this command initialize spec/ folder.
+this command initialize ``spec/`` folder.
 
 and edit ``.rspec``file in your project folder for easy to see result.
 
@@ -83,9 +83,9 @@ when you make models or controllers(like ``rails g model user``), spec file made
 
 ## Model test
 
-When we make model, add some validates, class methods and associations.
+When we make model, add some validates and associations.
 
-Now we check validates, class methods doing well and has correct associations.
+Now we check validates, has correct associations doing well.
 
 ### Validates
 
@@ -96,9 +96,11 @@ We think that we want user's email and password are presence, email is uniquenes
 it's very simple. open ``app/models/user.rb`` and add following codes.
 
 ```sh
-validates :email, :password, presence: true
-validates :email, uniqueness: true
-validates :password, length: { minimum: 6 }
+class User < ActiveRecord::Base
+  validates :email, :password, presence: true
+  validates :email, uniqueness: true
+  validates :password, length: { minimum: 6 }
+end
 ```
 
 Before test, make test data using FactoryGirl.
@@ -146,11 +148,135 @@ RSpec.describe User, type: model do
 end
 ```
 
-*Tips*
+***Tips***
 > If you want to use guard-rails, execute command ``guard`` in shell, guard-rails is run.  
 When you change your codes, guard run test automatically. It's very useful when you write test codes.  
 else, execute command ``rspec spec/models/user_spec.rb`` run test also. I recommend first.
 
+### Associations
+
+In blog, 1 user can have many posts and one post can have many comments. Yes, it's 1:N associations!  
+Now we test User model has proper association with Post.
+
+Add following codes in ``app/models/user.rb``
+
+```sh
+  has_many :posts, dependent: :destroy
+```
+
+This code means that User can have many posts and when delete user, also delete posts too.
+
+And add following codes in ``app/models/post.rb``
+
+***Before***
+> If you didn't create Post model, run ``rails g model post body:string user_id:integer`` and ``rake db:migrate``
+
+```sh
+class Post < ActiveRecord::Base
+  belongs_to :user
+end
+```
+
+Now we make associations before we talk. So it's test time!
+
+open ``spec/models/user_spec.rb``
+
+```sh
+context 'associations' do
+  it 'can have many posts' do
+    as = User.reflect_on_associations(:posts)
+    expect(as.macro).to eq(:has_many)
+  end
+end
+```
+
+and open ``spec/models/post_spec.rb``
+
+```sh
+context 'associations' do
+  it 'belongs to user' do
+    as = Post.reflect_on_associations(:user)
+    expect(as.macro).to eq(:belongs_to)
+  end
+end
+```
+
+These tests are doing well. But you want see associations doing really well, run ``rails c``, make user instance ``user`` and ``user.posts`` returns ActiveRecord associations. 
+
+
+## Controller test
+
+Before we test model validates, associations. If model consist of validates and associations, controller sonsist of actions and logic.
+
+So in controller test, we test actions and logic.
+
+### Actions
+
+Before we assume that we make blog app. So we need to login feature. This is action.
+
+Let's make login controller. run ``rails g controller login``
+
+***Before***
+> In login controller, we return result using json. So in test we parse json.
+
+Open ``spec/controllers/login_controller.rb`` and add following codes.
+
+
+```sh
+require 'rails_helper'
+require 'spec_helper'
+
+RSpec.describe LoginController, type: :controller do
+  before(:each) do
+    @email = 'test@test.com'
+    @password = 'asdfaa'
+  end
+  
+  describe '#login' do
+    it 'email is nil' do
+      post :login, { password: @password }
+      
+      body = JSON.parse(response.body)
+      
+      expect(body['success']).to eq(false)
+    end
+    
+    it 'password is nil' do
+      post :login, { email: @email }
+      
+      body = JSON.parse(response.body)
+      
+      expect(body['success']).to eq(false)
+    end
+    
+    it 'no user' do
+      post :login, { email: @email, password: @password }
+      
+      body = JSON.parse(response.body)
+      
+      expect(body['success']).to eq(false)
+    end
+    
+    it 'login success' do
+      post :login, { email: @email, password: @password }
+      
+      body = JSON.parse(response.body)
+      
+      expect(body['success']).to eq(true)
+    end
+  end
+end
+```
+
+We test one action, but test is so long. Because tests are test all possible cases. See this [link][all]
+
+
+## Author
+
+Wonjae Kim / [@Akkiros][Facebook]
 
 
 [link]: http://everydayrails.com/2012/03/12/testing-series-rspec-setup.html
+[Facebook]: https://www.facebook.com/akkiros
+[Linkedin]: https://www.linkedin.com/profile/view?id=79379340
+[all]: http://betterspecs.org/#all
