@@ -219,6 +219,10 @@ Let's make login controller. run ``rails g controller login``
 ***Before***
 > In login controller, we return result using json. So in test we parse json.
 
+Assume that what happens when we login? Hum.. write wrong email or password or submit form before write email or password, even we didn't register but try to login! So we need to prevent these unexpected actions.
+
+Now make tests for test these unexpected actions.
+
 Open ``spec/controllers/login_controller.rb`` and add following codes.
 
 
@@ -230,6 +234,8 @@ RSpec.describe LoginController, type: :controller do
   before(:each) do
     @email = 'test@test.com'
     @password = 'asdfaa'
+    
+    User.create(email: @email, password: @password, username: 'akkiros')
   end
   
   describe '#login' do
@@ -249,7 +255,15 @@ RSpec.describe LoginController, type: :controller do
       expect(body['success']).to eq(false)
     end
     
-    it 'no user' do
+    it 'not match user' do
+      post :login, { email: 't@test.com', password: @password }
+      
+      body = JSON.parse(response.body)
+      
+      expect(body['success']).to eq(false)
+    end
+        
+    it 'not match password' do
       post :login, { email: @email, password: @password }
       
       body = JSON.parse(response.body)
@@ -267,9 +281,63 @@ RSpec.describe LoginController, type: :controller do
   end
 end
 ```
+***Tips***
+> We test one action, but tests are so long. Because tests are test all possible cases. See this [link][all]
 
-We test one action, but test is so long. Because tests are test all possible cases. See this [link][all]
+In login controller test, we test cases. So we make login controller suitable actions.
 
+Open ``app/controllers/login_controller.rb`` and add following codes.
+
+```ruby
+class LoginController < ApplicationController
+  def initialize
+    @result = {}
+  end
+  
+  def login
+    email = params[:email] unless params[:email].nil?
+    password = params[:password] unless params[:password].nil?
+    
+    return error('Argument Error') if email.nil? || password.nil?
+    
+    @user = User.find_by_email(email)
+    
+    return error('No match user') if @user.nil?
+    return error('Password is not match') unless @user.password == password
+    
+    success
+  end
+  
+  private
+  
+  def error(message)
+    @result = {
+      success: false,
+      error: {
+        message: message,
+      }
+    }
+    
+    render json: @result
+  end
+  
+  def success
+    render json: @result.merge!(success: true)
+  end
+end
+```
+
+This login controller return json type.  
+If login controller have not enough params, it returns error with ``Argument Error`` message.  
+Similarly no matching user by email, it returns error with ``No match user`` message.
+
+And add routes. Edit ``config/routes.rb``
+
+```ruby
+post '/login' => 'login#login'
+```
+
+Now run ``rspec spec/controllers/login_controller_spec.rb`` all tests ok!
 
 ## Author
 
@@ -278,5 +346,4 @@ Wonjae Kim / [@Akkiros][Facebook]
 
 [link]: http://everydayrails.com/2012/03/12/testing-series-rspec-setup.html
 [Facebook]: https://www.facebook.com/akkiros
-[Linkedin]: https://www.linkedin.com/profile/view?id=79379340
 [all]: http://betterspecs.org/#all
