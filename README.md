@@ -155,7 +155,7 @@ else, execute command ``rspec spec/models/user_spec.rb`` run test also. I recomm
 
 ### Associations
 
-In blog, 1 user can have many posts and one post can have many comments. Yes, it's 1:N associations!  
+In blog, one user can have many posts and one post can have many comments. Yes, it's 1:N associations!  
 Now we test User model has proper association with Post.
 
 Add following codes in ``app/models/user.rb``
@@ -206,7 +206,7 @@ These tests are doing well. But you want see associations doing really well, run
 
 ## Controller test
 
-Before we test model validates, associations. If model consist of validates and associations, controller sonsist of actions and logic.
+Before we test model validates, associations. If model consist of validates and associations, controller consist of actions and logic.
 
 So in controller test, we test actions and logic.
 
