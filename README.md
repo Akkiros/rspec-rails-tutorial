@@ -12,7 +12,7 @@ refered to this [site][link]
 
 ## Gemfile
 
-```sh
+```ruby
 group :development, :test do
   gem 'rspec-rails'
   gem 'factory_girl_rails'
@@ -32,7 +32,7 @@ edit your ``config/database.yml``
 
 MySQL
 
-```sh
+```ruby
 test:
   adapter: mysql2
   encoding: utf-8
@@ -50,7 +50,7 @@ test:
 
 after run ``bundle install`` start rspec setting.
 
-```sh
+```ruby
 $ rails g rspec:install
 ```
 
@@ -58,7 +58,7 @@ this command initialize ``spec/`` folder.
 
 and edit ``.rspec``file in your project folder for easy to see result.
 
-```sh
+```ruby
 --format documentation
 ```
 
@@ -66,7 +66,7 @@ and edit ``.rspec``file in your project folder for easy to see result.
 
 edit ``config/application.rb`` and add following code.
 
-```sh
+```ruby
 config.generators do |g|
   g.test_framework :rspec,
     fixtures: true,
@@ -95,7 +95,7 @@ We think that we want user's email and password are presence, email is uniquenes
 
 it's very simple. open ``app/models/user.rb`` and add following codes.
 
-```sh
+```ruby
 class User < ActiveRecord::Base
   validates :email, :password, presence: true
   validates :email, uniqueness: true
@@ -107,7 +107,7 @@ Before test, make test data using FactoryGirl.
 
 open ``spec/factories/user.rb`` and add following codes.
 
-```sh
+```ruby
 FactoryGirl.define do
   factory :wonjae, class: User do |f|
     f.email "test@test.com"
@@ -125,7 +125,7 @@ When we run ``@user = FactoryGirl.create(:wonjae)`` ``@user`` have email "test@t
 
 Now we should test this validates. open ``spec/models/user_spec.rb`` and make test.
 
-```sh
+```ruby
 require 'rails_helper'
 require 'spec_helper'
 
@@ -160,7 +160,7 @@ Now we test User model has proper association with Post.
 
 Add following codes in ``app/models/user.rb``
 
-```sh
+```ruby
   has_many :posts, dependent: :destroy
 ```
 
@@ -171,7 +171,7 @@ And add following codes in ``app/models/post.rb``
 ***Before***
 > If you didn't create Post model, run ``rails g model post body:string user_id:integer`` and ``rake db:migrate``
 
-```sh
+```ruby
 class Post < ActiveRecord::Base
   belongs_to :user
 end
@@ -181,7 +181,7 @@ Now we make associations before we talk. So it's test time!
 
 open ``spec/models/user_spec.rb``
 
-```sh
+```ruby
 context 'associations' do
   it 'can have many posts' do
     as = User.reflect_on_associations(:posts)
@@ -192,7 +192,7 @@ end
 
 and open ``spec/models/post_spec.rb``
 
-```sh
+```ruby
 context 'associations' do
   it 'belongs to user' do
     as = Post.reflect_on_associations(:user)
@@ -226,7 +226,7 @@ Now make tests for test these unexpected actions.
 Open ``spec/controllers/login_controller.rb`` and add following codes.
 
 
-```sh
+```ruby
 require 'rails_helper'
 require 'spec_helper'
 
